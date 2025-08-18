@@ -56,12 +56,26 @@ const MOCK_PROJECTS = {
         model: "claude-3-opus"
       }
     ]
+  },
+  "99999": {
+    id: "99999",
+    slug: "project-history-viewer",
+    name: "Project History Viewer",
+    versions: [
+        {
+            versionId: "v1",
+            createdAt: "2024-05-20T10:00:00Z",
+            prompt: "Be able to input any project url by id or by slug url and we will deep search all the metadata for that project get all its versions and make a list of all the prompt history/versions and for each version show the model used.",
+            model: "claude-3-opus"
+        }
+    ]
   }
 };
 
 const MOCK_PROJECTS_BY_SLUG = {
   "my-awesome-project": MOCK_PROJECTS["12345"],
-  "data-visualization-tool": MOCK_PROJECTS["67890"]
+  "data-visualization-tool": MOCK_PROJECTS["67890"],
+  "project-history-viewer": MOCK_PROJECTS["99999"]
 };
 
 const form = document.getElementById('project-form');
@@ -77,13 +91,26 @@ async function handleSearch(event) {
     const query = input.value.trim();
     if (!query) return;
 
+    let identifier = query;
+    // Try to parse the input as a URL
+    try {
+        const url = new URL(query);
+        // Extract the last non-empty part of the path
+        const pathParts = url.pathname.split('/').filter(part => part.length > 0);
+        if (pathParts.length > 0) {
+            identifier = pathParts[pathParts.length - 1];
+        }
+    } catch (e) {
+        // Not a valid URL, so we'll use the raw query as the identifier
+    }
+
     // Reset UI
     projectInfoContainer.innerHTML = '';
     errorMessageContainer.classList.add('hidden');
     loader.classList.remove('hidden');
 
     try {
-        const project = await fetchProjectData(query);
+        const project = await fetchProjectData(identifier);
         renderProject(project);
     } catch (error) {
         showError(error.message);
@@ -137,4 +164,3 @@ function showError(message) {
     errorMessageContainer.textContent = message;
     errorMessageContainer.classList.remove('hidden');
 }
-
